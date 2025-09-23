@@ -43,3 +43,6 @@ next-env.d.ts
 .env.local
 *.log
 model-data/
+# API Keys and Test Files
+.env.local
+test-*.js

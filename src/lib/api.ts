@@ -2,45 +2,62 @@ import axios from 'axios';
 import { HistoricalData, NewsItem } from '@/types';
 
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
+const ALPHA_VANTAGE_BASE = 'https://www.alphavantage.co/query';
 
 export class DataAPI {
-  private apiKey: string;
+  private finnhubKey: string;
+  private alphaVantageKey: string;
 
   constructor() {
-    this.apiKey = process.env.FINNHUB_API_KEY || '';
+    this.finnhubKey = process.env.FINNHUB_API_KEY || '';
+    this.alphaVantageKey = process.env.ALPHA_VANTAGE_API_KEY || '';
   }
 
-  // Get historical price data
+  // Get historical price data from Alpha Vantage (free tier supports this)
   async getHistoricalPrices(
     symbol: string,
     fromDate: string,
     toDate: string
   ): Promise<HistoricalData[]> {
-    const from = Math.floor(new Date(fromDate).getTime() / 1000);
-    const to = Math.floor(new Date(toDate).getTime() / 1000);
-    
     try {
-      const response = await axios.get(
-        `${FINNHUB_BASE}/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${to}&token=${this.apiKey}`
-      );
+      const response = await axios.get(ALPHA_VANTAGE_BASE, {
+        params: {
+          function: 'TIME_SERIES_DAILY',
+          symbol: symbol,
+          apikey: this.alphaVantageKey,
+          outputsize: 'full'
+        }
+      });
 
-      const data = response.data;
-      if (data.s === 'no_data') {
-        throw new Error('No data available for the specified period');
+      const timeSeries = response.data['Time Series (Daily)'];
+      if (!timeSeries) {
+        throw new Error('No historical data available');
       }
 
-      return data.c.map((close: number, index: number) => ({
-        date: new Date(data.t[index] * 1000).toISOString().split('T')[0],
-        close,
-        volume: data.v[index]
-      }));
+      // Convert to our format and filter by date range
+      const data: HistoricalData[] = [];
+      const startDate = new Date(fromDate);
+      const endDate = new Date(toDate);
+
+      for (const [date, values] of Object.entries(timeSeries)) {
+        const currentDate = new Date(date);
+        if (currentDate >= startDate && currentDate <= endDate) {
+          data.push({
+            date,
+            close: parseFloat((values as any)['4. close']),
+            volume: parseInt((values as any)['5. volume'])
+          });
+        }
+      }
+
+      return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     } catch (error) {
       console.error('Error fetching historical prices:', error);
       throw new Error('Failed to fetch historical price data');
     }
   }
 
-  // Get news for a symbol
+  // Keep using Finnhub for news (this works on free tier)
   async getNews(
     symbol: string,
     fromDate: string,
@@ -48,26 +65,39 @@ export class DataAPI {
   ): Promise<NewsItem[]> {
     try {
       const response = await axios.get(
-        `${FINNHUB_BASE}/company-news?symbol=${symbol}&from=${fromDate}&to=${toDate}&token=${this.apiKey}`
+        `${FINNHUB_BASE}/company-news?symbol=${symbol}&from=${fromDate}&to=${toDate}&token=${this.finnhubKey}`
       );
 
-      return response.data.slice(0, 50); // Limit to 50 most recent articles
+      return response.data.slice(0, 50);
     } catch (error) {
       console.error('Error fetching news:', error);
       throw new Error('Failed to fetch news data');
     }
   }
 
-  // Get ETF holdings (for SPY analysis)
-  async getETFHoldings(symbol: string = 'SPY') {
+  // Get current quotes from Finnhub (this works)
+  async getCurrentQuote(symbol: string) {
     try {
       const response = await axios.get(
-        `${FINNHUB_BASE}/etf/holdings?symbol=${symbol}&token=${this.apiKey}`
+        `${FINNHUB_BASE}/quote?symbol=${symbol}&token=${this.finnhubKey}`
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching ETF holdings:', error);
-      throw new Error('Failed to fetch ETF holdings');
+      console.error('Error fetching current quote:', error);
+      throw new Error('Failed to fetch current quote');
+    }
+  }
+
+  // Replace ETF holdings with stock profile (since we switched to AAPL)
+  async getStockProfile(symbol: string = 'AAPL') {
+    try {
+      const response = await axios.get(
+        `${FINNHUB_BASE}/stock/profile2?symbol=${symbol}&token=${this.finnhubKey}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching stock profile:', error);
+      throw new Error('Failed to fetch stock profile');
     }
   }
 }
