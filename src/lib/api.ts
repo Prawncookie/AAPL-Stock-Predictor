@@ -11,41 +11,41 @@ export class DataAPI {
   constructor() {
     this.finnhubKey = process.env.FINNHUB_API_KEY || '';
     this.alphaVantageKey = process.env.ALPHA_VANTAGE_API_KEY || '';
+    console.log('Alpha Vantage key loaded:', this.alphaVantageKey ? this.alphaVantageKey.substring(0, 10) + '...' : 'Missing');
   }
 
-  // Get historical price data from Alpha Vantage (free tier supports this)
-  async getHistoricalPrices(
-    symbol: string,
-    fromDate: string,
-    toDate: string
-  ): Promise<HistoricalData[]> {
+  async getHistoricalPrices(symbol: string, from: string, to: string): Promise<HistoricalData[]> {
     try {
+      await new Promise(resolve => setTimeout(resolve, 15000)); // 15s delay for rate limit
+      const toDate = to;
+      console.log('Calling Alpha Vantage for', symbol, from, toDate);
       const response = await axios.get(ALPHA_VANTAGE_BASE, {
         params: {
           function: 'TIME_SERIES_DAILY',
-          symbol: symbol,
+          symbol,
           apikey: this.alphaVantageKey,
-          outputsize: 'full'
+          outputsize: 'full' // Up to 100 days, matches Dec 2024
         }
       });
 
+      console.log('Alpha Vantage response keys:', Object.keys(response.data));
+
       const timeSeries = response.data['Time Series (Daily)'];
-      if (!timeSeries) {
-        throw new Error('No historical data available');
+      if (!timeSeries || response.data['Note'] || response.data['Error Message']) {
+        throw new Error(`No historical data available or rate limit exceeded: ${JSON.stringify(response.data)}`);
       }
 
-      // Convert to our format and filter by date range
       const data: HistoricalData[] = [];
-      const startDate = new Date(fromDate);
+      const startDate = new Date(from);
       const endDate = new Date(toDate);
 
-      for (const [date, values] of Object.entries(timeSeries)) {
+      for (const [date, values] of Object.entries(timeSeries) as [string, any][]) {
         const currentDate = new Date(date);
-        if (currentDate >= startDate && currentDate <= endDate) {
+        if (currentDate >= startDate && currentDate <= endDate && values['4. close'] && values['5. volume']) {
           data.push({
             date,
-            close: parseFloat((values as any)['4. close']),
-            volume: parseInt((values as any)['5. volume'])
+            close: parseFloat(values['4. close']),
+            volume: parseInt(values['5. volume'])
           });
         }
       }
@@ -57,17 +57,12 @@ export class DataAPI {
     }
   }
 
-  // Keep using Finnhub for news (this works on free tier)
-  async getNews(
-    symbol: string,
-    fromDate: string,
-    toDate: string
-  ): Promise<NewsItem[]> {
+  async getNews(symbol: string, from: string, to: string): Promise<NewsItem[]> {
     try {
       const response = await axios.get(
-        `${FINNHUB_BASE}/company-news?symbol=${symbol}&from=${fromDate}&to=${toDate}&token=${this.finnhubKey}`
+        `${FINNHUB_BASE}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${this.finnhubKey}`
       );
-
+    
       return response.data.slice(0, 50);
     } catch (error) {
       console.error('Error fetching news:', error);
@@ -75,7 +70,7 @@ export class DataAPI {
     }
   }
 
-  // Get current quotes from Finnhub (this works)
+
   async getCurrentQuote(symbol: string) {
     try {
       const response = await axios.get(
@@ -88,7 +83,7 @@ export class DataAPI {
     }
   }
 
-  // Replace ETF holdings with stock profile (since we switched to AAPL)
+
   async getStockProfile(symbol: string = 'AAPL') {
     try {
       const response = await axios.get(
@@ -101,3 +96,4 @@ export class DataAPI {
     }
   }
 }
+
