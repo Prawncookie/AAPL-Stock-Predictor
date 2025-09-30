@@ -35,16 +35,36 @@ function prepareData(prices: TrainingData[], lookback: number = 5) {
 
 async function train() {
   console.log('Loading data...');
-  const rawData = JSON.parse(fs.readFileSync('data/aapl-2024-01-01-2024-03-31.json', 'utf8'));
-  const prices = rawData.prices;
   
-  console.log(`Loaded ${prices.length} price points`);
+  const dataFiles = [
+    'data/aapl-2023-01-01-2023-06-30.json',
+    'data/aapl-2023-07-01-2023-12-31.json',
+    'data/aapl-2024-01-01-2024-06-30.json',
+    'data/aapl-2024-07-01-2024-09-01.json'
+  ];
+  
+  let allPrices: TrainingData[] = [];
+  
+  for (const file of dataFiles) {
+    if (fs.existsSync(file)) {
+      const rawData = JSON.parse(fs.readFileSync(file, 'utf8'));
+      allPrices = allPrices.concat(rawData.prices);
+      console.log(`Loaded ${rawData.prices.length} points from ${file}`);
+    } else {
+      console.log(`Warning: ${file} not found, skipping...`);
+    }
+  }
+  
+  console.log(`\nTotal: ${allPrices.length} price points`);
+  
+  allPrices.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
   const lookback = 5;
-  const { features, targets } = prepareData(prices, lookback);
+  const { features, targets } = prepareData(allPrices, lookback);
   
-  console.log(`Created ${features.length} training samples`);
+  console.log(`Created ${features.length} training samples\n`);
   
+  // CREATE THE MODEL (this was missing)
   const model = tf.sequential({
     layers: [
       tf.layers.dense({ inputShape: [lookback * 2], units: 32, activation: 'relu' }),
@@ -80,7 +100,6 @@ async function train() {
     fs.mkdirSync('models');
   }
   
-  // Save as JSON (browser-compatible format)
   const modelTopology = model.toJSON();
   const weights = model.getWeights();
   const weightData = await Promise.all(weights.map(async w => {
