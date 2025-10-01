@@ -1,3 +1,5 @@
+<img width="1200" height="400" alt="image" src="https://github.com/user-attachments/assets/00185b99-c4cf-45c1-8960-0a540f0b2661" />
+
 Stock Price Predictor
 
 AI-powered stock price prediction using neural networks and historical market data.
