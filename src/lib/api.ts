@@ -39,7 +39,11 @@ export class DataAPI {
       const startDate = new Date(from);
       const endDate = new Date(toDate);
 
-      for (const [date, values] of Object.entries(timeSeries) as [string, any][]) {
+      interface AlphaVantageData {
+  '4. close': string;
+  '5. volume': string;
+}
+for (const [date, values] of Object.entries(timeSeries) as [string, AlphaVantageData][]) {      
         const currentDate = new Date(date);
         if (currentDate >= startDate && currentDate <= endDate && values['4. close'] && values['5. volume']) {
           data.push({

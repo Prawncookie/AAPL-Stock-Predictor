@@ -84,43 +84,43 @@ export default function Home() {
             ⚠️ For educational and demonstration purposes only. Not financial advice.
           </div>
         </div>
-
+ 
         {/* Controls */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Prediction Parameters</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">Prediction Parameters</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Stock Symbol
               </label>
               <input
                 type="text"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="AAPL"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-800 mb-2">
                 Start Date
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-800 mb-2">
                 End Date
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="flex items-end">
@@ -146,26 +146,26 @@ export default function Home() {
         {predictions.length > 0 && (
           <div className="space-y-6">
             {/* Metrics */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="text-gray-700">
               <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-blue-600">
                     {calculateAccuracy().toFixed(1)}%
                   </div>
-                  <div className="text-gray-600">Directional Accuracy</div>
+                  <div className="text-gray-700">Directional Accuracy</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-green-600">
                     {metrics?.mse ? metrics.mse.toFixed(4) : 'N/A'}
                   </div>
-                  <div className="text-gray-600">Mean Squared Error</div>
+                  <div className="text-gray-700">Mean Squared Error</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-purple-600">
                     {predictions.length}
                   </div>
-                  <div className="text-gray-600">Predictions Made</div>
+                  <div className="text-gray-700">Predictions Made</div>
                 </div>
               </div>
             </div>
@@ -174,17 +174,16 @@ export default function Home() {
             <PredictionChart predictions={predictions} />
 
             {/* Detailed Results */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="text-gray-700">
               <h2 className="text-xl font-semibold mb-4">Prediction Details</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full table-auto">
                   <thead>
-                    <tr className="bg-gray-50">
+                    <tr className="bg-gray-700 text-white">
                       <th className="px-4 py-2 text-left">Date</th>
                       <th className="px-4 py-2 text-left">Predicted</th>
                       <th className="px-4 py-2 text-left">Actual</th>
                       <th className="px-4 py-2 text-left">Diff</th>
-                      <th className="px-4 py-2 text-left">Sentiment</th>
                       <th className="px-4 py-2 text-left">Confidence</th>
                     </tr>
                   </thead>
@@ -212,15 +211,6 @@ export default function Home() {
                             ) : 'N/A'}
                           </td>
                           <td className="px-4 py-2">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              pred.sentiment > 0.1 ? 'bg-green-100 text-green-800' :
-                              pred.sentiment < -0.1 ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {pred.sentiment.toFixed(2)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2">
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-blue-600 h-2 rounded-full" 
@@ -240,11 +230,10 @@ export default function Home() {
             </div>
           </div>
         )}
-
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm mt-12">
-          <p>Built with Next.js, TensorFlow.js, and OpenAI</p>
-          <p>Data provided by Finnhub • Sentiment analysis powered by GPT-4</p>
+          <p>Built with Next.js, TensorFlow.js, and Google Gemini</p>
+          <p>Data provided by your mom... ahem, by Alpha Vantage & Finnhub</p>
         </div>
       </div>
     </div>
