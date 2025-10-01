@@ -7,23 +7,34 @@ AI-powered stock price prediction using neural networks and historical market da
 Features:
 
 - Real-time stock price predictions using trained neural network.
+
 - Historical data visualization with actual vs predicted prices.
+
 - Performance metrics (directional accuracy, MSE).
+
 - Interactive charts powered by Chart.js.
+
 - Support for AAPL stock (extensible to other symbols).
+
 
 Tech Stack:
 
 - Frontend: Next.js 15, React, TypeScript, Tailwind CSS.
+
 - ML Model: TensorFlow.js (feedforward neural network).
+
 - Data Sources: Alpha Vantage (historical prices), Finnhub (current quotes).
+
 - Deployment: Vercel.
 
 Model Performance:
 
 - Training Data: 418 data points from Jan 2023 - Sep 2024.
+
 - Features: Price changes, volume changes (5-day lookback window).
+
 - Accuracy: 45-65% directional accuracy.
+
 - Loss: 0.0002 MSE on training data.
 
 **Note**: Stock price prediction is extremely difficult. This model is for educational/demonstration purposes only, not financial advice.
@@ -43,19 +54,36 @@ Open http://localhost:3000
 Project Structure:
 <img width="1928" height="1928" alt="screenshotify_2025-10-01T19-41-31-535Z" src="https://github.com/user-attachments/assets/0567da09-ec29-4f4e-be28-f620ba68befa" />
 
+
 Limitations:
+
 -Small training dataset (1.5 years).
+
 -No sentiment analysis (future enhancement).
+
 -Single stock support.
+
 -Market volatility not fully captured.
+
 
 Future Enhancements:
 
 -Add sentiment analysis from news
+
 -Support multiple stocks
+
 -LSTM architecture for better time-series modeling
+
 -Real-time predictions
+
 -Backtesting dashboard
+
+License:
+
+MIT
+
+**Disclaimer**.
+This is a portfolio project for educational purposes. Do not use for actual trading decisions.
 
 License
 MIT
