@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Stock Price Predictor
 
-## Getting Started
+AI-powered stock price prediction using neural networks and historical market data.
 
-First, run the development server:
+Features:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Real-time stock price predictions using trained neural network.
+- Historical data visualization with actual vs predicted prices.
+- Performance metrics (directional accuracy, MSE).
+- Interactive charts powered by Chart.js.
+- Support for AAPL stock (extensible to other symbols).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tech Stack:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Frontend: Next.js 15, React, TypeScript, Tailwind CSS.
+- ML Model: TensorFlow.js (feedforward neural network).
+- Data Sources: Alpha Vantage (historical prices), Finnhub (current quotes).
+- Deployment: Vercel.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Model Performance:
 
-## Learn More
+- Training Data: 418 data points from Jan 2023 - Sep 2024.
+- Features: Price changes, volume changes (5-day lookback window).
+- Accuracy: 45-65% directional accuracy.
+- Loss: 0.0002 MSE on training data.
 
-To learn more about Next.js, take a look at the following resources:
+**Note**: Stock price prediction is extremely difficult. This model is for educational/demonstration purposes only, not financial advice.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Installation:
+-bash
+<img width="1358" height="249" alt="Screenshot 2025-10-01 233447" src="https://github.com/user-attachments/assets/8185faf4-95b8-482b-a687-f460f59cf1bf" />
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Enviromental Variable:
+<img width="1354" height="207" alt="Screenshot 2025-10-01 233541" src="https://github.com/user-attachments/assets/01b11c32-f87c-4ee5-b466-1c5557933221" />
 
-## Deploy on Vercel
+Usage:
+-Bash
+<img width="1344" height="435" alt="Screenshot 2025-10-01 233635" src="https://github.com/user-attachments/assets/2849c2b9-bede-4f3a-938d-9a3cdcd2e681" />
+Open http://localhost:3000
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Project Structure:
+<img width="1928" height="1928" alt="screenshotify_2025-10-01T19-41-31-535Z" src="https://github.com/user-attachments/assets/0567da09-ec29-4f4e-be28-f620ba68befa" />
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Limitations:
+-Small training dataset (1.5 years).
+-No sentiment analysis (future enhancement).
+-Single stock support.
+-Market volatility not fully captured.
+
+Future Enhancements:
+
+-Add sentiment analysis from news
+-Support multiple stocks
+-LSTM architecture for better time-series modeling
+-Real-time predictions
+-Backtesting dashboard
+
+License
+MIT
