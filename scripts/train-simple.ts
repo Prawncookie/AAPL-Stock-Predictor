@@ -64,7 +64,7 @@ async function train() {
   
   console.log(`Created ${features.length} training samples\n`);
   
-  // CREATE THE MODEL (this was missing)
+  // CREATE THE MODEL 
   const model = tf.sequential({
     layers: [
       tf.layers.dense({ inputShape: [lookback * 2], units: 32, activation: 'relu' }),

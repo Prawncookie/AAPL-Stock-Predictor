@@ -232,8 +232,8 @@ export default function Home() {
         )}
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm mt-12">
-          <p>Built with Next.js, TensorFlow.js, and Google Gemini</p>
-          <p>Data provided by your mom... ahem, by Alpha Vantage & Finnhub</p>
+          <p>Built with Next.js, TensorFlow.js</p>
+          <p>Data provided by Alpha Vantage & Finnhub</p>
         </div>
       </div>
     </div>
