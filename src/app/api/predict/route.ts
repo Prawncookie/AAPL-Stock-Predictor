@@ -5,6 +5,16 @@ import fs from "fs";
 import path from "path";
 export const runtime = "nodejs";
 
+let cachedModel: tf.LayersModel | null = null;
+let modelPromise: Promise<tf.LayersModel> | null = null;
+
+async function getModel() {
+  if (cachedModel) return cachedModel;
+  if (!modelPromise) modelPromise = loadModelFromDisk();
+  cachedModel = await modelPromise;
+  return cachedModel;
+}
+
 type HistoricalPoint = { date: string; close: number; volume: number };
 
 type SavedModel = {
@@ -45,7 +55,7 @@ async function loadModelFromDisk(): Promise<tf.LayersModel> {
   const raw = fs.readFileSync(modelPath, "utf8");
   const saved = JSON.parse(raw) as SavedModel;
 
-  // IMPORTANT: your modelTopology is a JSON string
+  // IMPORTANT: my modelTopology is a JSON string
   const topology =
     typeof saved.modelTopology === "string"
       ? JSON.parse(saved.modelTopology)
@@ -115,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     const { features, dates, actuals } = buildFeatures(series, lookback);
 
-    const model = await loadModelFromDisk();
+    const model = await getModel();
 
     const xs = tf.tensor2d(features, [features.length, lookback * 2], "float32");
     const yhat = model.predict(xs) as tf.Tensor;
@@ -124,7 +134,6 @@ export async function POST(req: NextRequest) {
 
     xs.dispose();
     yhat.dispose();
-    model.dispose();
 
     // Convert predicted % change into predicted close price
     const predictions = dates.map((date, k) => {
