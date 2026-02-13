@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
     const data = rows
       .slice(headerIndex)
       .map((line) => line.split(","))
-      .filter(([date, , , , close, volume]) => date && close && volume && close !== "N/A")
+      .filter(([date, , , , close, volume]) => date && close && volume && close !== "N/A" && volume !== "N/A")
       .map(([date, , , , close, volume]) => ({
         date,
         close: Number(close),

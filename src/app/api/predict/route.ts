@@ -3,6 +3,7 @@ import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-cpu";
 import fs from "fs";
 import path from "path";
+export const runtime = "nodejs";
 
 type HistoricalPoint = { date: string; close: number; volume: number };
 
