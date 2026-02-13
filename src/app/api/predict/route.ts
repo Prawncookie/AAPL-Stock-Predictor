@@ -5,15 +5,22 @@ import fs from "fs";
 import path from "path";
 export const runtime = "nodejs";
 
-let cachedModel: tf.LayersModel | null = null;
-let modelPromise: Promise<tf.LayersModel> | null = null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __AAPL_MODEL__: tf.LayersModel | undefined;
+  // eslint-disable-next-line no-var
+  var __AAPL_MODEL_LOADING__: Promise<tf.LayersModel> | undefined;
+}
 
 async function getModel() {
-  if (cachedModel) return cachedModel;
-  if (!modelPromise) modelPromise = loadModelFromDisk();
-  cachedModel = await modelPromise;
-  return cachedModel;
+  if (globalThis.__AAPL_MODEL__) return globalThis.__AAPL_MODEL__;
+  if (!globalThis.__AAPL_MODEL_LOADING__) {
+    globalThis.__AAPL_MODEL_LOADING__ = loadModelFromDisk();
+  }
+  globalThis.__AAPL_MODEL__ = await globalThis.__AAPL_MODEL_LOADING__;
+  return globalThis.__AAPL_MODEL__;
 }
+
 
 type HistoricalPoint = { date: string; close: number; volume: number };
 
@@ -49,7 +56,9 @@ function buildFeatures(series: HistoricalPoint[], lookback = 5) {
 }
 
 async function loadModelFromDisk(): Promise<tf.LayersModel> {
+  if (tf.getBackend() !== "cpu") {
   await tf.setBackend("cpu");
+};
 
   const modelPath = path.join(process.cwd(), "models", "aapl-model.json");
   const raw = fs.readFileSync(modelPath, "utf8");
@@ -127,13 +136,14 @@ export async function POST(req: NextRequest) {
 
     const model = await getModel();
 
-    const xs = tf.tensor2d(features, [features.length, lookback * 2], "float32");
-    const yhat = model.predict(xs) as tf.Tensor;
+    const yhat = tf.tidy(() => {
+      const xs = tf.tensor2d(features, [features.length, lookback * 2], "float32");
+      return model.predict(xs) as tf.Tensor;
+    });
 
-    const predChanges = Array.from(await yhat.data()); // number[]
-
-    xs.dispose();
+    const predChanges = Array.from(await yhat.data());
     yhat.dispose();
+
 
     // Convert predicted % change into predicted close price
     const predictions = dates.map((date, k) => {
