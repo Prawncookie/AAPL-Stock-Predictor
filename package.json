@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "collect-data": "tsx scripts/collect-data.ts",
     "train": "tsx scripts/train-simple.ts"
   },
   "dependencies": {
@@ -12,7 +17,7 @@
     "cheerio": "^1.1.2",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "next": "15.5.3",
+    "next": "15.5.9",
     "react": "19.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "19.1.0"
@@ -30,13 +35,5 @@
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
     "typescript": "^5"
-  },
-  "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "lint": "next lint",
-  "collect-data": "tsx scripts/collect-data.ts",
-  "train": "tsx scripts/train-simple.ts"
-}
+  }
 }
