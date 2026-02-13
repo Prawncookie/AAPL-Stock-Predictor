@@ -40,8 +40,9 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return NextResponse.json({ symbol, from, to, source: "stooq", data });
-  } catch (e: any) {
-    console.error("historical route error:", e?.message || e);
-    return NextResponse.json({ error: "Failed to load historical data" }, { status: 500 });
-  }
+  } catch (e: unknown) {
+  const msg = e instanceof Error ? e.message : String(e);
+  console.error("historical route error:", msg);
+  return NextResponse.json({ error: "Failed to load historical data" }, { status: 500 });
+}
 }

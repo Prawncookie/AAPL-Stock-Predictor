@@ -6,9 +6,7 @@ import path from "path";
 export const runtime = "nodejs";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __AAPL_MODEL__: tf.LayersModel | undefined;
-  // eslint-disable-next-line no-var
   var __AAPL_MODEL_LOADING__: Promise<tf.LayersModel> | undefined;
 }
 
@@ -25,7 +23,7 @@ async function getModel() {
 type HistoricalPoint = { date: string; close: number; volume: number };
 
 type SavedModel = {
-  modelTopology: any; // your file stores this as a STRING
+  modelTopology: unknown; // your file stores this as a STRING
   weightData: { name: string; shape: number[]; data: number[] }[];
 };
 
@@ -58,7 +56,7 @@ function buildFeatures(series: HistoricalPoint[], lookback = 5) {
 async function loadModelFromDisk(): Promise<tf.LayersModel> {
   if (tf.getBackend() !== "cpu") {
   await tf.setBackend("cpu");
-};
+}
 
   const modelPath = path.join(process.cwd(), "models", "aapl-model.json");
   const raw = fs.readFileSync(modelPath, "utf8");
@@ -169,8 +167,9 @@ export async function POST(req: NextRequest) {
       symbol,
       dateRange: { startDate, endDate },
     });
-  } catch (e: any) {
-    console.error("predict route error:", e?.message || e);
-    return NextResponse.json({ error: "Prediction failed" }, { status: 500 });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("predict route error:", msg);
+    return NextResponse.json({ error: "Prediction failed", details: msg }, { status: 500 });
   }
 }
