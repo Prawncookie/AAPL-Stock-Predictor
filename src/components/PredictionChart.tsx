@@ -71,7 +71,7 @@ export default function PredictionChart({ predictions, title = "Stock Price Pred
   };
 
   return (
-  <div className="w-full p-4 bg-white rounded-lg shadow-lg">
+  <div className="w-full p-4 bg-white rounded-lg shadow-lg overflow-hidden">
     <div className="relative h-96">
       <Line data={chartData} options={options} />
     </div>
