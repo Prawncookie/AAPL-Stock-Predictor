@@ -53,6 +53,7 @@ export default function PredictionChart({ predictions, title = "Stock Price Pred
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top' as const,
@@ -70,8 +71,10 @@ export default function PredictionChart({ predictions, title = "Stock Price Pred
   };
 
   return (
-    <div className="w-full h-96 p-4 bg-white rounded-lg shadow-lg">
+  <div className="w-full p-4 bg-white rounded-lg shadow-lg">
+    <div className="relative h-96">
       <Line data={chartData} options={options} />
     </div>
+  </div>
   );
 }
