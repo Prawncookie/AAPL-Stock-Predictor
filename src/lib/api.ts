@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { HistoricalData, NewsItem } from '@/types';
+import { HistoricalData } from '@/types';
 
-const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const ALPHA_VANTAGE_BASE = 'https://www.alphavantage.co/query';
 
 type AlphaVantageDaily = Record<
@@ -13,16 +12,10 @@ type AlphaVantageDaily = Record<
 >;
 
 export class DataAPI {
-  private finnhubKey: string;
   private alphaVantageKey: string;
 
   constructor() {
-    this.finnhubKey = process.env.FINNHUB_API_KEY || '';
     this.alphaVantageKey = process.env.ALPHA_VANTAGE_API_KEY || '';
-    console.log(
-      'Alpha Vantage key loaded:',
-      this.alphaVantageKey ? this.alphaVantageKey.substring(0, 10) + '...' : 'Missing'
-    );
   }
 
   async getHistoricalPrices(symbol: string, from: string, to: string): Promise<HistoricalData[]> {
@@ -42,7 +35,7 @@ export class DataAPI {
 
       for (const row of rows.slice(headerIndex)) {
         if (!row) continue;
-        const [date, open, high, low, close, volume] = row.split(',');
+        const [date, , , , close, volume] = row.split(',');
         if (!date || !close || !volume || close === 'N/A' || volume === 'N/A') continue;
 
         const currentDate = new Date(date);
@@ -63,10 +56,7 @@ export class DataAPI {
     };
 
     const loadFromAlphaVantage = async (): Promise<HistoricalData[]> => {
-      // NOTE: Alpha Vantage free tier is rate-limited. This delay helps but isn't bulletproof.
       await new Promise((r) => setTimeout(r, 15000));
-
-      console.log('Calling Alpha Vantage for', symbol, from, to);
 
       const response = await axios.get(ALPHA_VANTAGE_BASE, {
         params: {
@@ -111,9 +101,7 @@ export class DataAPI {
       return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     };
 
-    // Try Alpha Vantage, fall back to Stooq
     if (!this.alphaVantageKey) {
-      console.warn('Alpha Vantage key missing, falling back to Stooq.');
       return loadFromStooq();
     }
 
@@ -122,40 +110,6 @@ export class DataAPI {
     } catch (err) {
       console.error('Alpha Vantage failed, falling back to Stooq:', err);
       return await loadFromStooq();
-    }
-  }
-
-  async getNews(symbol: string, from: string, to: string): Promise<NewsItem[]> {
-    try {
-      const response = await axios.get(
-        `${FINNHUB_BASE}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${this.finnhubKey}`
-      );
-      return response.data.slice(0, 50);
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      throw new Error('Failed to fetch news data');
-    }
-  }
-
-  async getCurrentQuote(symbol: string) {
-    try {
-      const response = await axios.get(`${FINNHUB_BASE}/quote?symbol=${symbol}&token=${this.finnhubKey}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching current quote:', error);
-      throw new Error('Failed to fetch current quote');
-    }
-  }
-
-  async getStockProfile(symbol: string = 'AAPL') {
-    try {
-      const response = await axios.get(
-        `${FINNHUB_BASE}/stock/profile2?symbol=${symbol}&token=${this.finnhubKey}`
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching stock profile:', error);
-      throw new Error('Failed to fetch stock profile');
     }
   }
 }
