@@ -3,80 +3,8 @@ import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-cpu";
 import fs from "fs";
 import path from "path";
-import axios from "axios";
+import { fetchStooqHistory } from "@/lib/stooq";
 export const runtime = "nodejs";
-
-async function fetchFromStooq(symbol: string, from: string, to: string): Promise<HistoricalPoint[]> {
-  const normalized = symbol.includes('.') ? symbol.toLowerCase() : `${symbol.toLowerCase()}.us`;
-  const response = await axios.get(`https://stooq.com/q/d/l/?s=${normalized}&i=d`);
-  const rows: string[] = String(response.data).trim().split('\n');
-  const headerIndex = rows[0]?.toLowerCase().includes('date') ? 1 : 0;
-
-  const start = new Date(from);
-  const end = new Date(to);
-  const data: HistoricalPoint[] = [];
-
-  for (const row of rows.slice(headerIndex)) {
-    if (!row) continue;
-    const [date, , , , close, volume] = row.split(',');
-    if (!date || !close || !volume || close === 'N/A' || volume === 'N/A') continue;
-    const currentDate = new Date(date);
-    if (currentDate >= start && currentDate <= end) {
-      data.push({ date, close: parseFloat(close), volume: parseInt(volume, 10) });
-    }
-  }
-
-  if (data.length === 0) throw new Error(`No Stooq historical data returned for ${normalized}`);
-  return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-}
-
-async function fetchFromAlphaVantage(symbol: string, from: string, to: string): Promise<HistoricalPoint[]> {
-  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
-  if (!apiKey) throw new Error('ALPHA_VANTAGE_API_KEY is not set');
-
-  const url = new URL('https://www.alphavantage.co/query');
-  url.searchParams.set('function', 'TIME_SERIES_DAILY');
-  url.searchParams.set('symbol', symbol);
-  url.searchParams.set('apikey', apiKey);
-  url.searchParams.set('outputsize', 'full');
-
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`Alpha Vantage responded with ${res.status}`);
-
-  const body = await res.json() as Record<string, unknown>;
-
-  if (body['Note'] || body['Error Message']) {
-    throw new Error(`Alpha Vantage error: ${JSON.stringify(body['Note'] ?? body['Error Message'])}`);
-  }
-
-  const timeSeries = body['Time Series (Daily)'] as Record<string, Record<string, string>> | undefined;
-  if (!timeSeries) throw new Error('Alpha Vantage response missing Time Series (Daily)');
-
-  const start = new Date(from);
-  const end = new Date(to);
-  const data: HistoricalPoint[] = [];
-
-  for (const [date, values] of Object.entries(timeSeries)) {
-    const d = new Date(date);
-    const close = values['4. close'];
-    const volume = values['5. volume'];
-    if (d >= start && d <= end && close && volume) {
-      data.push({ date, close: parseFloat(close), volume: parseInt(volume, 10) });
-    }
-  }
-
-  if (data.length === 0) throw new Error(`Alpha Vantage returned no data in range for ${symbol}`);
-  return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-}
-
-async function fetchHistoricalData(symbol: string, from: string, to: string): Promise<HistoricalPoint[]> {
-  try {
-    return await fetchFromStooq(symbol, from, to);
-  } catch (stooqErr) {
-    console.warn('[predict] Stooq failed, falling back to Alpha Vantage:', stooqErr);
-    return await fetchFromAlphaVantage(symbol, from, to);
-  }
-}
 
 declare global {
   var __AAPL_MODEL__: tf.LayersModel | undefined;
@@ -238,9 +166,9 @@ export async function POST(req: NextRequest) {
 
     let series: HistoricalPoint[];
     try {
-      series = await fetchHistoricalData(symbol, startDate, endDate);
+      series = await fetchStooqHistory(symbol, startDate, endDate);
     } catch (e: unknown) {
-      console.error("[predict] All data sources failed:", e);
+      console.error("[predict] Stooq fetch failed:", e);
       const msg = e instanceof Error ? e.message : String(e);
       return NextResponse.json({ error: "Failed to fetch historical data", details: msg }, { status: 502 });
     }
