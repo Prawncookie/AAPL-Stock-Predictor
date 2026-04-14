@@ -184,7 +184,6 @@ export default function Home() {
                       <th className="px-4 py-2 text-left">Predicted</th>
                       <th className="px-4 py-2 text-left">Actual</th>
                       <th className="px-4 py-2 text-left">Diff</th>
-                      <th className="px-4 py-2 text-left">Confidence</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -209,17 +208,6 @@ export default function Home() {
                                 {diffPercent > 0 ? '+' : ''}{diffPercent.toFixed(2)}%
                               </span>
                             ) : 'N/A'}
-                          </td>
-                          <td className="px-4 py-2">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full" 
-                                style={{ width: `${pred.confidence * 100}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-xs text-gray-600">
-                              {(pred.confidence * 100).toFixed(1)}%
-                            </span>
                           </td>
                         </tr>
                       );

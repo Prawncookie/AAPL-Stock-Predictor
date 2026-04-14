@@ -88,9 +88,11 @@ function buildFeatures(series: HistoricalPoint[]) {
   const features: number[][] = [];
   const dates: string[] = [];
   const actuals: number[] = [];
+  const prevCloses: number[] = [];
 
   const startIdx = Math.max(LOOKBACK, 19);
-  for (let i = startIdx; i < series.length; i++) {
+  // Stop at length - 1 so series[i + 1] always exists (we're predicting the next day)
+  for (let i = startIdx; i < series.length - 1; i++) {
     const feature: number[] = [];
     for (let j = i - LOOKBACK + 1; j <= i; j++) {
       feature.push(priceChanges[j], volumeChanges[j]);
@@ -98,11 +100,12 @@ function buildFeatures(series: HistoricalPoint[]) {
     feature.push(rsi[i], maCrossover[i], pricePosition[i]);
 
     features.push(feature);
-    dates.push(series[i].date);
-    actuals.push(series[i].close);
+    dates.push(series[i + 1].date);    // the day being predicted
+    actuals.push(series[i + 1].close); // that day's actual close
+    prevCloses.push(series[i].close);  // base price for % → absolute conversion
   }
 
-  return { features, dates, actuals };
+  return { features, dates, actuals, prevCloses };
 }
 
 async function loadModelFromDisk(): Promise<tf.LayersModel> {
@@ -178,7 +181,7 @@ export async function POST(req: NextRequest) {
 
     series.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const { features, dates, actuals } = buildFeatures(series);
+    const { features, dates, actuals, prevCloses } = buildFeatures(series);
 
     if (features.length === 0) {
       return NextResponse.json({ error: "No predictions could be generated from this date range." }, { status: 400 });
@@ -194,13 +197,11 @@ export async function POST(req: NextRequest) {
     const predChanges = Array.from(await yhat.data());
     yhat.dispose();
 
-    const startIdx = Math.max(LOOKBACK, 19);
-    const predictions = dates.map((date, k) => {
-      const prevClose = series[startIdx + k - 1].close;
-      const predicted = prevClose * (1 + predChanges[k]);
-      const actual = actuals[k];
-      return { date, predicted, actual, confidence: 0.75 };
-    });
+    const predictions = dates.map((date, k) => ({
+      date,
+      predicted: prevCloses[k] * (1 + predChanges[k]),
+      actual: actuals[k],
+    }));
 
     const mse =
       predictions.reduce((sum, p) => sum + Math.pow(p.predicted - p.actual, 2), 0) /

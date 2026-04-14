@@ -8,7 +8,6 @@ export interface PredictionResult {
   date: string;
   predicted: number;
   actual?: number;
-  confidence: number;
 }
 
 export interface ModelMetrics {
