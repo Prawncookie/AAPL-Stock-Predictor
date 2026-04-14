@@ -135,7 +135,10 @@ async function loadModelFromDisk(): Promise<tf.LayersModel> {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
+    const body = await req.json().catch((e: unknown) => {
+      console.error("[predict] JSON parse error:", e);
+      return null;
+    });
     if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 
     const { symbol, startDate, endDate } = body as {
@@ -145,6 +148,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (!symbol || !startDate || !endDate) {
+      console.error("[predict] Missing fields:", { symbol, startDate, endDate });
       return NextResponse.json(
         { error: "Missing symbol/startDate/endDate", received: body },
         { status: 400 }
@@ -152,6 +156,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (symbol.toUpperCase() !== "AAPL") {
+      console.error("[predict] Unsupported symbol:", symbol);
       return NextResponse.json(
         { error: "This model currently supports AAPL only." },
         { status: 400 }
@@ -173,6 +178,7 @@ export async function POST(req: NextRequest) {
     const series = (histJson.data ?? []) as HistoricalPoint[];
 
     if (series.length < MIN_SERIES_LENGTH + 1) {
+      console.error("[predict] Not enough data:", { seriesLength: series.length, required: MIN_SERIES_LENGTH + 1, symbol, startDate, endDate });
       return NextResponse.json(
         { error: `Not enough data. Need at least ${MIN_SERIES_LENGTH + 1} trading days in range.` },
         { status: 400 }
@@ -184,6 +190,7 @@ export async function POST(req: NextRequest) {
     const { features, dates, actuals, prevCloses } = buildFeatures(series);
 
     if (features.length === 0) {
+      console.error("[predict] No features generated:", { seriesLength: series.length, symbol, startDate, endDate });
       return NextResponse.json({ error: "No predictions could be generated from this date range." }, { status: 400 });
     }
 
@@ -214,8 +221,8 @@ export async function POST(req: NextRequest) {
       dateRange: { startDate, endDate },
     });
   } catch (e: unknown) {
+    console.error("[predict] Unhandled exception:", e);
     const msg = e instanceof Error ? e.message : String(e);
-    console.error("predict route error:", msg);
     return NextResponse.json({ error: "Prediction failed", details: msg }, { status: 500 });
   }
 }
