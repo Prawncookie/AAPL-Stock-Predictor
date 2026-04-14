@@ -5,6 +5,33 @@ import fs from "fs";
 import path from "path";
 export const runtime = "nodejs";
 
+async function fetchStooqData(symbol: string, from: string, to: string): Promise<HistoricalPoint[]> {
+  const normalized = symbol.includes('.') ? symbol.toLowerCase() : `${symbol.toLowerCase()}.us`;
+  const res = await fetch(`https://stooq.com/q/d/l/?s=${normalized}&i=d`);
+  if (!res.ok) throw new Error(`Stooq responded with ${res.status}`);
+
+  const text = await res.text();
+  const rows = text.trim().split('\n');
+  const headerIndex = rows[0]?.toLowerCase().includes('date') ? 1 : 0;
+
+  const start = new Date(from);
+  const end = new Date(to);
+  const data: HistoricalPoint[] = [];
+
+  for (const row of rows.slice(headerIndex)) {
+    if (!row) continue;
+    const [date, , , , close, volume] = row.split(',');
+    if (!date || !close || !volume || close === 'N/A' || volume === 'N/A') continue;
+    const d = new Date(date);
+    if (d >= start && d <= end) {
+      data.push({ date, close: parseFloat(close), volume: parseInt(volume, 10) });
+    }
+  }
+
+  if (data.length === 0) throw new Error(`No data returned from Stooq for ${normalized}`);
+  return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}
+
 declare global {
   var __AAPL_MODEL__: tf.LayersModel | undefined;
   var __AAPL_MODEL_LOADING__: Promise<tf.LayersModel> | undefined;
@@ -163,19 +190,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const baseUrl = new URL(req.url).origin;
-    const histRes = await fetch(
-      `${baseUrl}/api/historical?symbol=${encodeURIComponent(symbol)}&from=${startDate}&to=${endDate}`,
-      { cache: "no-store" }
-    );
-
-    if (!histRes.ok) {
-      const msg = await histRes.text();
-      return NextResponse.json({ error: "Historical fetch failed", details: msg }, { status: 502 });
+    let series: HistoricalPoint[];
+    try {
+      series = await fetchStooqData(symbol, startDate, endDate);
+    } catch (e: unknown) {
+      console.error("[predict] Stooq fetch failed:", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      return NextResponse.json({ error: "Failed to fetch historical data", details: msg }, { status: 502 });
     }
-
-    const histJson = await histRes.json();
-    const series = (histJson.data ?? []) as HistoricalPoint[];
 
     if (series.length < MIN_SERIES_LENGTH + 1) {
       console.error("[predict] Not enough data:", { seriesLength: series.length, required: MIN_SERIES_LENGTH + 1, symbol, startDate, endDate });
