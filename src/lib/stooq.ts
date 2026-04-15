@@ -13,9 +13,14 @@ async function fetchAlphaVantage(symbol: string, from: string, to: string): Prom
   if (!apiKey) throw new Error('No ALPHA_VANTAGE_API_KEY set');
 
   const r = await axios.get('https://www.alphavantage.co/query', {
-    params: { function: 'TIME_SERIES_DAILY', symbol, outputsize: 'full', apikey: apiKey },
+    params: { function: 'TIME_SERIES_DAILY', symbol, outputsize: 'compact', apikey: apiKey },
     timeout: 10000,
   });
+
+  const body = r.data as Record<string, string> | undefined;
+  if (body?.Note || body?.['Error Message'] || body?.Information) {
+    throw new Error(`Alpha Vantage error: ${(body.Note ?? body['Error Message'] ?? body.Information).slice(0, 200)}`);
+  }
 
   const timeSeries = r.data['Time Series (Daily)'] as Record<string, Record<string, string>> | undefined;
   if (!timeSeries) {
