@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-cpu";
 import fs from "fs";
 import path from "path";
-import { fetchStooqHistory } from "@/lib/stooq";
+import { fetchHistoricalData } from "@/lib/stooq";
 export const runtime = "nodejs";
 
 declare global {
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
 
     let series: HistoricalPoint[];
     try {
-      series = await fetchStooqHistory(symbol, startDate, endDate);
+      series = await fetchHistoricalData(symbol, startDate, endDate);
     } catch (e: unknown) {
       console.error("[predict] Stooq fetch failed:", e);
       const msg = e instanceof Error ? e.message : String(e);
