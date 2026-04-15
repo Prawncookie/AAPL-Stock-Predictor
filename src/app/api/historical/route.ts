@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchStooqHistory } from "@/lib/stooq";
+import { fetchHistoricalData } from "@/lib/stooq";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing symbol/from/to" }, { status: 400 });
     }
 
-    const data = await fetchStooqHistory(symbol, from, to);
+    const data = await fetchHistoricalData(symbol, from, to);
     return NextResponse.json({ symbol, from, to, source: "stooq", data });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
